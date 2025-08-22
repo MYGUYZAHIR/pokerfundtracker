@@ -1,20 +1,19 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useProfiles } from "../hooks/use-profiles";
 import { ProfileCard } from "../components/profile-card";
 import { StatusBar } from "../components/status-bar";
 import { BankCard } from "../components/bank-card";
 import { CreditCard, Plus } from "lucide-react";
-import type { Profile, InsertProfile } from "@shared/schema";
+import type { InsertProfile } from "@shared/schema";
 
 export default function Home() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { profiles, bank, isLoading, updateFunds, updateName, createProfile, deleteProfile } = useProfiles();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newPlayerForm, setNewPlayerForm] = useState({
     name: '',
@@ -23,122 +22,72 @@ export default function Home() {
     avatarUrl: ''
   });
 
-  const { data: allProfiles = [], isLoading } = useQuery<Profile[]>({
-    queryKey: ["/api/profiles"],
-  });
+  // All logic is now handled by the useProfiles hook
 
-  const { data: bank } = useQuery<Profile>({
-    queryKey: ["/api/bank"],
-  });
+  // Local state for loading states
+  const [operationLoading, setOperationLoading] = useState(false);
 
-  // Separate players from bank
-  const profiles = allProfiles.filter(p => p.isBank !== "true");
-
-  const updateFundsMutation = useMutation({
-    mutationFn: async ({ id, funds }: { id: string; funds: number }) => {
-      const response = await apiRequest("PATCH", `/api/profiles/${id}/funds`, { funds });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/bank"] });
+  const handleUpdateFunds = async (id: string, funds: number) => {
+    try {
+      setOperationLoading(true);
+      await updateFunds(id, funds);
       toast({
         title: "Funds Updated",
         description: "Player funds have been successfully updated.",
       });
-    },
-    onError: (error: any) => {
-      const message = error?.message || "Failed to update player funds. Please try again.";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update player funds.";
       toast({
         title: "Update Failed",
         description: message,
         variant: "destructive",
       });
-    },
-  });
+    } finally {
+      setOperationLoading(false);
+    }
+  };
 
-  const updateNameMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const response = await apiRequest("PATCH", `/api/profiles/${id}/name`, { name });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+  const handleUpdateName = async (id: string, name: string) => {
+    try {
+      setOperationLoading(true);
+      await updateName(id, name);
       toast({
         title: "Name Updated",
         description: "Player name has been successfully updated.",
       });
-    },
-    onError: () => {
+    } catch (error) {
       toast({
         title: "Update Failed",
         description: "Failed to update player name. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  const createPlayerMutation = useMutation({
-    mutationFn: async (profile: InsertProfile) => {
-      const response = await apiRequest("POST", "/api/profiles", profile);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/bank"] });
-      setShowCreateDialog(false);
-      setNewPlayerForm({ name: '', level: 1, funds: 0, avatarUrl: '' });
-      toast({
-        title: "Player Created",
-        description: "New player has been successfully created.",
-      });
-    },
-    onError: (error: any) => {
-      const message = error?.message || "Failed to create player. Please try again.";
-      toast({
-        title: "Creation Failed",
-        description: message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deletePlayerMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/profiles/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/bank"] });
-      toast({
-        title: "Player Deleted",
-        description: "Player has been successfully removed. Funds returned to bank.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Deletion Failed",
-        description: "Failed to delete player. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleUpdateFunds = (id: string, funds: number) => {
-    updateFundsMutation.mutate({ id, funds });
-  };
-
-  const handleUpdateName = (id: string, name: string) => {
-    updateNameMutation.mutate({ id, name });
-  };
-
-  const handleDeletePlayer = (id: string) => {
-    if (confirm('Are you sure you want to delete this player? This action cannot be undone.')) {
-      deletePlayerMutation.mutate(id);
+    } finally {
+      setOperationLoading(false);
     }
   };
 
-  const handleCreatePlayer = () => {
+  const handleDeletePlayer = async (id: string) => {
+    if (confirm('Are you sure you want to delete this player? This action cannot be undone.')) {
+      try {
+        setOperationLoading(true);
+        await deleteProfile(id);
+        toast({
+          title: "Player Deleted",
+          description: "Player has been successfully removed. Funds returned to bank.",
+        });
+      } catch (error) {
+        toast({
+          title: "Deletion Failed",
+          description: "Failed to delete player. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setOperationLoading(false);
+      }
+    }
+  };
+
+  const handleCreatePlayer = async () => {
     if (!newPlayerForm.name.trim()) {
       toast({
         title: "Validation Error",
@@ -159,10 +108,28 @@ export default function Home() {
     
     const avatarUrl = newPlayerForm.avatarUrl || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200`;
     
-    createPlayerMutation.mutate({
-      ...newPlayerForm,
-      avatarUrl
-    });
+    try {
+      setOperationLoading(true);
+      await createProfile({
+        ...newPlayerForm,
+        avatarUrl
+      });
+      setShowCreateDialog(false);
+      setNewPlayerForm({ name: '', level: 1, funds: 0, avatarUrl: '' });
+      toast({
+        title: "Player Created",
+        description: "New player has been successfully created.",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create player.";
+      toast({
+        title: "Creation Failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setOperationLoading(false);
+    }
   };
 
   const saveAllChanges = () => {
@@ -283,11 +250,11 @@ export default function Home() {
                       </Button>
                       <Button
                         onClick={handleCreatePlayer}
-                        disabled={createPlayerMutation.isPending}
+                        disabled={operationLoading}
                         className="bg-game-accent hover:bg-emerald-600 text-white"
                         data-testid="button-confirm-create"
                       >
-                        {createPlayerMutation.isPending ? 'Creating...' : 'Create Player'}
+                        {operationLoading ? 'Creating...' : 'Create Player'}
                       </Button>
                     </div>
                   </div>
@@ -327,7 +294,7 @@ export default function Home() {
               onUpdateFunds={handleUpdateFunds}
               onUpdateName={handleUpdateName}
               onDeleteProfile={handleDeletePlayer}
-              isUpdating={updateFundsMutation.isPending || updateNameMutation.isPending || deletePlayerMutation.isPending}
+              isUpdating={operationLoading}
             />
           ))}
         </div>
