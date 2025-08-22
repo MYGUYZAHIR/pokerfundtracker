@@ -1,4 +1,4 @@
-import { type Profile, type InsertProfile, type UpdateProfile } from "@shared/schema";
+import { type Profile, type InsertProfile, type UpdateProfile, type UpdateProfileName } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -9,6 +9,8 @@ export interface IStorage {
   getProfile(id: string): Promise<Profile | undefined>;
   createProfile(profile: InsertProfile): Promise<Profile>;
   updateProfileFunds(id: string, funds: number): Promise<Profile | undefined>;
+  updateProfileName(id: string, name: string): Promise<Profile | undefined>;
+  deleteProfile(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -77,6 +79,7 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const profile: Profile = {
       ...insertProfile,
+      funds: insertProfile.funds ?? 0,
       id,
       lastUpdated: new Date().toISOString()
     };
@@ -98,6 +101,26 @@ export class MemStorage implements IStorage {
 
     this.profiles.set(id, updatedProfile);
     return updatedProfile;
+  }
+
+  async updateProfileName(id: string, name: string): Promise<Profile | undefined> {
+    const profile = this.profiles.get(id);
+    if (!profile) {
+      return undefined;
+    }
+
+    const updatedProfile: Profile = {
+      ...profile,
+      name,
+      lastUpdated: new Date().toISOString()
+    };
+
+    this.profiles.set(id, updatedProfile);
+    return updatedProfile;
+  }
+
+  async deleteProfile(id: string): Promise<boolean> {
+    return this.profiles.delete(id);
   }
 }
 

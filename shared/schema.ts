@@ -23,6 +23,13 @@ export const updateProfileSchema = createInsertSchema(profiles).pick({
   funds: z.number().min(0).max(999999999),
 });
 
+export const updateProfileNameSchema = createInsertSchema(profiles).pick({
+  name: true,
+}).extend({
+  name: z.string().min(1).max(50),
+});
+
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
+export type UpdateProfileName = z.infer<typeof updateProfileNameSchema>;
 export type Profile = typeof profiles.$inferSelect;

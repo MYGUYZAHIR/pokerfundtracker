@@ -1,27 +1,34 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Trash2, Edit3, Check, X } from "lucide-react";
 import type { Profile } from "@shared/schema";
 
 interface ProfileCardProps {
   profile: Profile;
   onUpdateFunds: (id: string, funds: number) => void;
+  onUpdateName: (id: string, name: string) => void;
+  onDeleteProfile: (id: string) => void;
   isUpdating: boolean;
 }
 
-export function ProfileCard({ profile, onUpdateFunds, isUpdating }: ProfileCardProps) {
+export function ProfileCard({ profile, onUpdateFunds, onUpdateName, onDeleteProfile, isUpdating }: ProfileCardProps) {
   const [funds, setFunds] = useState(profile.funds.toString());
-  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(profile.name);
+  const [isEditingFunds, setIsEditingFunds] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
 
   useEffect(() => {
     setFunds(profile.funds.toString());
-  }, [profile.funds]);
+    setName(profile.name);
+  }, [profile.funds, profile.name]);
 
   const handleFundsChange = (value: string) => {
     setFunds(value);
   };
 
   const handleFundsBlur = () => {
-    setIsEditing(false);
+    setIsEditingFunds(false);
     const numericValue = parseInt(funds) || 0;
     if (numericValue !== profile.funds && numericValue >= 0) {
       onUpdateFunds(profile.id, numericValue);
@@ -30,12 +37,31 @@ export function ProfileCard({ profile, onUpdateFunds, isUpdating }: ProfileCardP
     }
   };
 
+  const handleNameBlur = () => {
+    setIsEditingName(false);
+    const trimmedName = name.trim();
+    if (trimmedName && trimmedName !== profile.name) {
+      onUpdateName(profile.id, trimmedName);
+    } else {
+      setName(profile.name);
+    }
+  };
+
   const handleFundsKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleFundsBlur();
     } else if (e.key === 'Escape') {
       setFunds(profile.funds.toString());
-      setIsEditing(false);
+      setIsEditingFunds(false);
+    }
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNameBlur();
+    } else if (e.key === 'Escape') {
+      setName(profile.name);
+      setIsEditingName(false);
     }
   };
 
@@ -68,9 +94,59 @@ export function ProfileCard({ profile, onUpdateFunds, isUpdating }: ProfileCardP
       />
       
       <div className="text-center mb-4">
-        <h3 className="text-game-text font-semibold text-lg" data-testid={`text-name-${profile.id}`}>
-          {profile.name}
-        </h3>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          {isEditingName ? (
+            <div className="flex items-center gap-1">
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={handleNameBlur}
+                onKeyDown={handleNameKeyDown}
+                className="bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-game-text text-center font-semibold text-lg w-40 focus:border-game-accent"
+                disabled={isUpdating}
+                data-testid={`input-name-${profile.id}`}
+                autoFocus
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleNameBlur}
+                className="p-1 h-6 w-6 text-game-accent hover:text-white"
+                data-testid={`button-save-name-${profile.id}`}
+              >
+                <Check className="w-3 h-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setName(profile.name);
+                  setIsEditingName(false);
+                }}
+                className="p-1 h-6 w-6 text-red-400 hover:text-red-300"
+                data-testid={`button-cancel-name-${profile.id}`}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h3 className="text-game-text font-semibold text-lg" data-testid={`text-name-${profile.id}`}>
+                {profile.name}
+              </h3>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsEditingName(true)}
+                className="p-1 h-6 w-6 text-game-muted hover:text-game-accent"
+                data-testid={`button-edit-name-${profile.id}`}
+              >
+                <Edit3 className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+        </div>
         <span className="text-game-muted text-sm" data-testid={`text-level-${profile.id}`}>
           Level {profile.level}
         </span>
@@ -84,7 +160,7 @@ export function ProfileCard({ profile, onUpdateFunds, isUpdating }: ProfileCardP
               type="number"
               value={funds}
               onChange={(e) => handleFundsChange(e.target.value)}
-              onFocus={() => setIsEditing(true)}
+              onFocus={() => setIsEditingFunds(true)}
               onBlur={handleFundsBlur}
               onKeyDown={handleFundsKeyDown}
               min="0"
@@ -101,11 +177,24 @@ export function ProfileCard({ profile, onUpdateFunds, isUpdating }: ProfileCardP
             )}
           </div>
         </div>
-        <div className="flex justify-between items-center text-sm">
+        <div className="flex justify-between items-center text-sm mb-3">
           <span className="text-game-muted">Last Updated:</span>
           <span className="text-game-text" data-testid={`text-last-updated-${profile.id}`}>
             {formatLastUpdated(profile.lastUpdated)}
           </span>
+        </div>
+        <div className="pt-3 border-t border-slate-700">
+          <Button
+            onClick={() => onDeleteProfile(profile.id)}
+            variant="outline"
+            size="sm"
+            className="w-full bg-red-900/20 border-red-600/50 text-red-400 hover:bg-red-900/40 hover:border-red-500 hover:text-red-300 transition-colors"
+            disabled={isUpdating}
+            data-testid={`button-delete-${profile.id}`}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete Player
+          </Button>
         </div>
       </div>
     </div>

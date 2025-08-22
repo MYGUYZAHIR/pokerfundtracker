@@ -1,15 +1,26 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ProfileCard } from "@/components/profile-card";
-import { StatusBar } from "@/components/status-bar";
-import { CreditCard } from "lucide-react";
-import type { Profile } from "@shared/schema";
+import { ProfileCard } from "../components/profile-card";
+import { StatusBar } from "../components/status-bar";
+import { CreditCard, Plus } from "lucide-react";
+import type { Profile, InsertProfile } from "@shared/schema";
 
 export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newPlayerForm, setNewPlayerForm] = useState({
+    name: '',
+    level: 1,
+    funds: 0,
+    avatarUrl: ''
+  });
 
   const { data: profiles = [], isLoading } = useQuery<Profile[]>({
     queryKey: ["/api/profiles"],
@@ -36,8 +47,100 @@ export default function Home() {
     },
   });
 
+  const updateNameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const response = await apiRequest("PATCH", `/api/profiles/${id}/name`, { name });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+      toast({
+        title: "Name Updated",
+        description: "Player name has been successfully updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update player name. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createPlayerMutation = useMutation({
+    mutationFn: async (profile: InsertProfile) => {
+      const response = await apiRequest("POST", "/api/profiles", profile);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+      setShowCreateDialog(false);
+      setNewPlayerForm({ name: '', level: 1, funds: 0, avatarUrl: '' });
+      toast({
+        title: "Player Created",
+        description: "New player has been successfully created.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Creation Failed",
+        description: "Failed to create player. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePlayerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/profiles/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+      toast({
+        title: "Player Deleted",
+        description: "Player has been successfully removed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Deletion Failed",
+        description: "Failed to delete player. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleUpdateFunds = (id: string, funds: number) => {
     updateFundsMutation.mutate({ id, funds });
+  };
+
+  const handleUpdateName = (id: string, name: string) => {
+    updateNameMutation.mutate({ id, name });
+  };
+
+  const handleDeletePlayer = (id: string) => {
+    if (confirm('Are you sure you want to delete this player? This action cannot be undone.')) {
+      deletePlayerMutation.mutate(id);
+    }
+  };
+
+  const handleCreatePlayer = () => {
+    if (!newPlayerForm.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Player name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const avatarUrl = newPlayerForm.avatarUrl || `https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200`;
+    
+    createPlayerMutation.mutate({
+      ...newPlayerForm,
+      avatarUrl
+    });
   };
 
   const saveAllChanges = () => {
@@ -76,6 +179,91 @@ export default function Home() {
               <span className="text-game-muted text-sm">
                 Total Players: <span className="text-game-accent font-semibold" data-testid="text-total-players">{totalPlayers}</span>
               </span>
+              
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+                    data-testid="button-create-player"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Player
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-game-card border-slate-700">
+                  <DialogHeader>
+                    <DialogTitle className="text-game-text">Create New Player</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div>
+                      <Label htmlFor="name" className="text-game-text">Name</Label>
+                      <Input
+                        id="name"
+                        value={newPlayerForm.name}
+                        onChange={(e) => setNewPlayerForm({ ...newPlayerForm, name: e.target.value })}
+                        className="bg-slate-700 border-slate-600 text-game-text focus:border-game-accent"
+                        placeholder="Enter player name"
+                        data-testid="input-new-player-name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="level" className="text-game-text">Level</Label>
+                      <Input
+                        id="level"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={newPlayerForm.level}
+                        onChange={(e) => setNewPlayerForm({ ...newPlayerForm, level: parseInt(e.target.value) || 1 })}
+                        className="bg-slate-700 border-slate-600 text-game-text focus:border-game-accent"
+                        data-testid="input-new-player-level"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="funds" className="text-game-text">Initial Funds</Label>
+                      <Input
+                        id="funds"
+                        type="number"
+                        min="0"
+                        value={newPlayerForm.funds}
+                        onChange={(e) => setNewPlayerForm({ ...newPlayerForm, funds: parseInt(e.target.value) || 0 })}
+                        className="bg-slate-700 border-slate-600 text-game-text focus:border-game-accent"
+                        data-testid="input-new-player-funds"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="avatar" className="text-game-text">Avatar URL (optional)</Label>
+                      <Input
+                        id="avatar"
+                        value={newPlayerForm.avatarUrl}
+                        onChange={(e) => setNewPlayerForm({ ...newPlayerForm, avatarUrl: e.target.value })}
+                        className="bg-slate-700 border-slate-600 text-game-text focus:border-game-accent"
+                        placeholder="https://example.com/avatar.jpg"
+                        data-testid="input-new-player-avatar"
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowCreateDialog(false)}
+                        className="border-slate-600 text-game-text hover:bg-slate-700"
+                        data-testid="button-cancel-create"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleCreatePlayer}
+                        disabled={createPlayerMutation.isPending}
+                        className="bg-game-accent hover:bg-emerald-600 text-white"
+                        data-testid="button-confirm-create"
+                      >
+                        {createPlayerMutation.isPending ? 'Creating...' : 'Create Player'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
               <Button 
                 onClick={saveAllChanges}
                 className="bg-game-accent hover:bg-emerald-600 text-white font-medium transition-colors"
@@ -102,7 +290,9 @@ export default function Home() {
               key={profile.id}
               profile={profile}
               onUpdateFunds={handleUpdateFunds}
-              isUpdating={updateFundsMutation.isPending}
+              onUpdateName={handleUpdateName}
+              onDeleteProfile={handleDeletePlayer}
+              isUpdating={updateFundsMutation.isPending || updateNameMutation.isPending || deletePlayerMutation.isPending}
             />
           ))}
         </div>
