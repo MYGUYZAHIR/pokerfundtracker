@@ -24,25 +24,25 @@ const getDefaultData = (): ProfilesData => {
     id: bankId,
     name: "Main Bank",
     level: 100,
-    funds: 450000, // Reduced to account for existing player funds
+    funds: 7100,
     avatarUrl: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200",
     lastUpdated: new Date().toISOString(),
     isBank: "true"
   };
 
   const profiles: Profile[] = [
-    { id: generateUUID(), name: "Alex Hunter", level: 47, funds: 15750, avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Nova Storm", level: 52, funds: 23400, avatarUrl: "https://images.unsplash.com/photo-1494790108755-2616c727e29b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Tech Wizard", level: 38, funds: 8900, avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Luna Phoenix", level: 44, funds: 19250, avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Iron Bear", level: 61, funds: 31800, avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Golden Arrow", level: 49, funds: 16650, avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Shadow Blade", level: 55, funds: 27300, avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Fire Rose", level: 42, funds: 12750, avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Storm Walker", level: 36, funds: 7450, avatarUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671d66?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Cyber Queen", level: 58, funds: 29900, avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Neon Strike", level: 45, funds: 18500, avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
-    { id: generateUUID(), name: "Mystic Dawn", level: 63, funds: 35200, avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() }
+    { id: generateUUID(), name: "Alex Hunter", level: 47, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Nova Storm", level: 52, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1494790108755-2616c727e29b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Tech Wizard", level: 38, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Luna Phoenix", level: 44, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Iron Bear", level: 61, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Golden Arrow", level: 49, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Shadow Blade", level: 55, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Fire Rose", level: 42, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Storm Walker", level: 36, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671d66?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Cyber Queen", level: 58, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Neon Strike", level: 45, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() },
+    { id: generateUUID(), name: "Mystic Dawn", level: 63, funds: 0, avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200", isBank: "false", lastUpdated: new Date().toISOString() }
   ];
 
   return { profiles, bank };
