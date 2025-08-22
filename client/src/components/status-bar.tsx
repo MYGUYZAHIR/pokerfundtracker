@@ -4,9 +4,11 @@ interface StatusBarProps {
   totalFunds: number;
   averageFunds: number;
   highestLevel: number;
+  bankFunds?: number;
+  totalSystemCapacity?: number;
 }
 
-export function StatusBar({ totalFunds, averageFunds, highestLevel }: StatusBarProps) {
+export function StatusBar({ totalFunds, averageFunds, highestLevel, bankFunds, totalSystemCapacity }: StatusBarProps) {
   const [autoSave, setAutoSave] = useState(true);
 
   const formatCurrency = (amount: number) => {
@@ -23,19 +25,35 @@ export function StatusBar({ totalFunds, averageFunds, highestLevel }: StatusBarP
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-6">
           <div className="text-center">
-            <div className="text-2xl font-bold text-game-accent" data-testid="text-total-funds">
+            <div className="text-2xl font-bold text-game-accent" data-testid="text-total-player-funds">
               {formatCurrency(totalFunds)}
             </div>
-            <div className="text-game-muted text-sm">Total Funds</div>
+            <div className="text-game-muted text-sm">Player Funds</div>
           </div>
+          {bankFunds !== undefined && (
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400" data-testid="text-bank-funds">
+                {formatCurrency(bankFunds)}
+              </div>
+              <div className="text-game-muted text-sm">Bank Reserve</div>
+            </div>
+          )}
+          {totalSystemCapacity && (
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-400" data-testid="text-system-capacity">
+                {formatCurrency(totalSystemCapacity)}
+              </div>
+              <div className="text-game-muted text-sm">System Capacity</div>
+            </div>
+          )}
           <div className="text-center">
             <div className="text-2xl font-bold text-game-text" data-testid="text-average-funds">
               {formatCurrency(averageFunds)}
             </div>
-            <div className="text-game-muted text-sm">Average Funds</div>
+            <div className="text-game-muted text-sm">Avg Player Funds</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400" data-testid="text-highest-level">
+            <div className="text-2xl font-bold text-purple-400" data-testid="text-highest-level">
               Level {highestLevel}
             </div>
             <div className="text-game-muted text-sm">Highest Level</div>

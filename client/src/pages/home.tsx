@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileCard } from "../components/profile-card";
 import { StatusBar } from "../components/status-bar";
+import { BankCard } from "../components/bank-card";
 import { CreditCard, Plus } from "lucide-react";
 import type { Profile, InsertProfile } from "@shared/schema";
 
@@ -22,9 +23,16 @@ export default function Home() {
     avatarUrl: ''
   });
 
-  const { data: profiles = [], isLoading } = useQuery<Profile[]>({
+  const { data: allProfiles = [], isLoading } = useQuery<Profile[]>({
     queryKey: ["/api/profiles"],
   });
+
+  const { data: bank } = useQuery<Profile>({
+    queryKey: ["/api/bank"],
+  });
+
+  // Separate players from bank
+  const profiles = allProfiles.filter(p => p.isBank !== "true");
 
   const updateFundsMutation = useMutation({
     mutationFn: async ({ id, funds }: { id: string; funds: number }) => {
@@ -33,15 +41,17 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank"] });
       toast({
         title: "Funds Updated",
         description: "Player funds have been successfully updated.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      const message = error?.message || "Failed to update player funds. Please try again.";
       toast({
         title: "Update Failed",
-        description: "Failed to update player funds. Please try again.",
+        description: message,
         variant: "destructive",
       });
     },
@@ -75,6 +85,7 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank"] });
       setShowCreateDialog(false);
       setNewPlayerForm({ name: '', level: 1, funds: 0, avatarUrl: '' });
       toast({
@@ -82,10 +93,11 @@ export default function Home() {
         description: "New player has been successfully created.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      const message = error?.message || "Failed to create player. Please try again.";
       toast({
         title: "Creation Failed",
-        description: "Failed to create player. Please try again.",
+        description: message,
         variant: "destructive",
       });
     },
@@ -97,9 +109,10 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank"] });
       toast({
         title: "Player Deleted",
-        description: "Player has been successfully removed.",
+        description: "Player has been successfully removed. Funds returned to bank.",
       });
     },
     onError: () => {
@@ -130,6 +143,15 @@ export default function Home() {
       toast({
         title: "Validation Error",
         description: "Player name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (bank && newPlayerForm.funds > bank.funds) {
+      toast({
+        title: "Insufficient Bank Funds",
+        description: `Bank only has ${bank.funds.toLocaleString()} available. Cannot create player with ${newPlayerForm.funds.toLocaleString()} funds.`,
         variant: "destructive",
       });
       return;
@@ -220,16 +242,24 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="funds" className="text-game-text">Initial Funds</Label>
-                      <Input
-                        id="funds"
-                        type="number"
-                        min="0"
-                        value={newPlayerForm.funds}
-                        onChange={(e) => setNewPlayerForm({ ...newPlayerForm, funds: parseInt(e.target.value) || 0 })}
-                        className="bg-slate-700 border-slate-600 text-game-text focus:border-game-accent"
-                        data-testid="input-new-player-funds"
-                      />
+                      <div>
+                        <Label htmlFor="funds" className="text-game-text">Initial Funds</Label>
+                        {bank && (
+                          <p className="text-yellow-200/70 text-xs mb-2">
+                            Available in bank: {bank.funds.toLocaleString()}
+                          </p>
+                        )}
+                        <Input
+                          id="funds"
+                          type="number"
+                          min="0"
+                          max={bank?.funds || 999999999}
+                          value={newPlayerForm.funds}
+                          onChange={(e) => setNewPlayerForm({ ...newPlayerForm, funds: parseInt(e.target.value) || 0 })}
+                          className="bg-slate-700 border-slate-600 text-game-text focus:border-game-accent"
+                          data-testid="input-new-player-funds"
+                        />
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="avatar" className="text-game-text">Avatar URL (optional)</Label>
@@ -283,6 +313,11 @@ export default function Home() {
           <p className="text-game-muted">Click on any fund amount to edit. Changes are saved automatically.</p>
         </div>
 
+        {/* Bank Profile */}
+        {bank && (
+          <BankCard bank={bank} />
+        )}
+
         {/* Profile Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {profiles.map((profile) => (
@@ -302,6 +337,8 @@ export default function Home() {
           totalFunds={totalFunds}
           averageFunds={averageFunds}
           highestLevel={highestLevel}
+          bankFunds={bank?.funds}
+          totalSystemCapacity={bank && totalFunds ? bank.funds + totalFunds : undefined}
         />
       </main>
     </div>
