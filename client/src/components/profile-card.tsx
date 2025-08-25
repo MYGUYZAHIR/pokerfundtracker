@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit3, Check, X } from "lucide-react";
+import { Trash2, Edit3, Check, X, Plus, Minus } from "lucide-react";
 import type { Profile } from "@shared/schema";
 
 interface ProfileCardProps {
@@ -63,6 +63,12 @@ export function ProfileCard({ profile, onUpdateFunds, onUpdateName, onDeleteProf
       setName(profile.name);
       setIsEditingName(false);
     }
+  };
+
+  const handleQuickChange = (amount: number) => {
+    const currentFunds = profile.funds;
+    const newFunds = Math.max(0, currentFunds + amount);
+    onUpdateFunds(profile.id, newFunds);
   };
 
   const formatLastUpdated = (timestamp: string) => {
@@ -153,28 +159,65 @@ export function ProfileCard({ profile, onUpdateFunds, onUpdateName, onDeleteProf
       </div>
       
       <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <span className="text-game-muted text-sm">Current Funds:</span>
-          <div className="relative">
-            <Input
-              type="number"
-              value={funds}
-              onChange={(e) => handleFundsChange(e.target.value)}
-              onFocus={() => setIsEditingFunds(true)}
-              onBlur={handleFundsBlur}
-              onKeyDown={handleFundsKeyDown}
-              min="0"
-              max="999999999"
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-game-text text-right font-mono focus:border-game-accent focus:ring-1 focus:ring-game-accent outline-none w-32 transition-colors pl-6"
-              disabled={isUpdating}
-              data-testid={`input-funds-${profile.id}`}
-            />
-            <span className="absolute left-2 top-2 text-game-accent text-sm">$</span>
-            {isUpdating && (
-              <div className="absolute right-2 top-2">
-                <div className="w-3 h-3 border border-game-accent border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-game-muted text-sm">Current Funds:</span>
+            <div className="relative">
+              <Input
+                type="number"
+                value={funds}
+                onChange={(e) => handleFundsChange(e.target.value)}
+                onFocus={() => setIsEditingFunds(true)}
+                onBlur={handleFundsBlur}
+                onKeyDown={handleFundsKeyDown}
+                min="0"
+                max="999999999"
+                className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-game-text text-right font-mono focus:border-game-accent focus:ring-1 focus:ring-game-accent outline-none w-32 transition-colors pl-6"
+                disabled={isUpdating}
+                data-testid={`input-funds-${profile.id}`}
+              />
+              <span className="absolute left-2 top-2 text-game-accent text-sm">$</span>
+              {isUpdating && (
+                <div className="absolute right-2 top-2">
+                  <div className="w-3 h-3 border border-game-accent border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Quick Change Buttons */}
+          <div className="space-y-2">
+            <div className="text-center">
+              <span className="text-game-muted text-xs">Quick Changes</span>
+            </div>
+            <div className="grid grid-cols-5 gap-1">
+              {[1, 5, 10, 25, 100].map((amount) => (
+                <div key={amount} className="flex flex-col gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleQuickChange(amount)}
+                    disabled={isUpdating}
+                    className="h-6 px-1 text-xs bg-green-900/20 border-green-600/50 text-green-400 hover:bg-green-900/40 hover:border-green-500 hover:text-green-300"
+                    data-testid={`button-add-${amount}-${profile.id}`}
+                  >
+                    <Plus className="w-2 h-2 mr-1" />
+                    {amount}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleQuickChange(-amount)}
+                    disabled={isUpdating || profile.funds < amount}
+                    className="h-6 px-1 text-xs bg-red-900/20 border-red-600/50 text-red-400 hover:bg-red-900/40 hover:border-red-500 hover:text-red-300 disabled:opacity-30"
+                    data-testid={`button-subtract-${amount}-${profile.id}`}
+                  >
+                    <Minus className="w-2 h-2 mr-1" />
+                    {amount}
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
         <div className="flex justify-between items-center text-sm mb-3">
